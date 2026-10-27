@@ -124,6 +124,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)External\SFML\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -135,56 +136,41 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="actor.cpp" />
-    <ClCompile Include="config.cpp" />
     <ClCompile Include="editor.cpp" />
     <ClCompile Include="editor_interface.cpp" />
-    <ClCompile Include="editor_old.cpp" />
+    <ClCompile Include="effect.cpp" />
+    <ClCompile Include="entity.cpp" />
     <ClCompile Include="inputHandler.cpp" />
-    <ClCompile Include="light.cpp" />
-    <ClCompile Include="interface_old.cpp" />
-    <ClCompile Include="main old.cpp" />
     <ClCompile Include="map.cpp" />
     <ClCompile Include="menu.cpp" />
-    <ClCompile Include="texturemanager.cpp" />
-    <ClCompile Include="enemy.cpp" />
-    <ClCompile Include="input_old.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="map_old.cpp" />
-    <ClCompile Include="menu_old.cpp" />
+    <ClCompile Include="game.cpp" />
     <ClCompile Include="player.cpp" />
-    <ClCompile Include="projectile.cpp" />
+    <ClCompile Include="texturemanager.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="textures.cpp" />
-    <ClCompile Include="editorpanel.cpp" />
-    <ClCompile Include="tileset.cpp" />
     <ClCompile Include="sprites_manager.cpp" />
     <ClCompile Include="windows_things.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="actor.hpp" />
     <ClInclude Include="editor.hpp" />
     <ClInclude Include="editorState.hpp" />
     <ClInclude Include="editor_interface.hpp" />
-    <ClInclude Include="editor_old.hpp" />
+    <ClInclude Include="effect.hpp" />
+    <ClInclude Include="entity.hpp" />
+    <ClInclude Include="game.hpp" />
     <ClInclude Include="globalvariables.hpp" />
     <ClInclude Include="inputHandler.hpp" />
-    <ClInclude Include="interface_old.hpp" />
-    <ClInclude Include="light.hpp" />
     <ClInclude Include="map.hpp" />
     <ClInclude Include="menu.hpp" />
-    <ClInclude Include="texturemanager.hpp" />
-    <ClInclude Include="enemy.hpp" />
-    <ClInclude Include="input_old.hpp" />
-    <ClInclude Include="map_old.hpp" />
-    <ClInclude Include="menu_old.hpp" />
     <ClInclude Include="player.hpp" />
-    <ClInclude Include="config.hpp" />
-    <ClInclude Include="projectile.hpp" />
+    <ClInclude Include="texturemanager.hpp" />
     <ClInclude Include="textures.hpp" />
     <ClInclude Include="tileset.hpp" />
     <ClInclude Include="editorpanel.hpp" />
     <ClInclude Include="sprites_manager.hpp" />
-    <ClInclude Include="unique_sprite.hpp" />
+    <ClInclude Include="unique_effect.hpp" />
+    <ClInclude Include="unique_entity.hpp" />
+    <ClInclude Include="unique_tile.hpp" />
     <ClInclude Include="windows_things.hpp" />
   </ItemGroup>
   <ItemGroup>

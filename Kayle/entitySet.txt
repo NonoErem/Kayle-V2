@@ -1,0 +1,4 @@
+## ENTITY_SET SIZE ##
+1
+## ENTITY_SET DATA ##
+2 0 0 D:\Documents\Projets Visual Studio\Kayle remake\Kayle\Textures\ennemies\slime.png

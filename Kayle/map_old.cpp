@@ -6,7 +6,7 @@
 #include <sstream>
 #include <memory>
 #include "enemy.hpp"
-#include "player.hpp"
+#include "player_old.hpp"
 #include "textures.hpp"
 #include "tileset.hpp"
 #include <SFML/Graphics.hpp>
@@ -160,8 +160,8 @@ bool Map_old::loadFromFile(const std::string& filename) {
                             actor = std::make_unique<RangedEnemy>();
                         }
                         else if (actorType == "pl") { // player
-                            actor = std::make_unique<Player>();
-                            player = static_cast<Player*>(actor.get());
+                            actor = std::make_unique<Player_old>();
+                            player = static_cast<Player_old*>(actor.get());
                         }
                         else {
                             std::cerr << "Type d'acteur inconnu : " << actorType << std::endl;
@@ -185,11 +185,11 @@ bool Map_old::loadFromFile(const std::string& filename) {
 
  
 
-    Player* playerPtr = nullptr;
+    Player_old* playerPtr = nullptr;
 
     // On cherche le joueur dans la liste
     for (const auto& actor : actors) {
-        if (auto p = dynamic_cast<Player*>(actor.get())) {
+        if (auto p = dynamic_cast<Player_old*>(actor.get())) {
             playerPtr = p;
             break;
         }
@@ -373,7 +373,7 @@ void Map_old::setActor(int x, int y, int type) {
 
     switch (type) {
     case 0:
-        actor = std::make_unique<Player>();
+        actor = std::make_unique<Player_old>();
         break;
     case 1:
         actor = std::make_unique<MeleeEnemy>();

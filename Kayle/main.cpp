@@ -5,9 +5,11 @@
 #include "inputHandler.hpp"
 #include "map.hpp"
 #include "editor.hpp"
+#include "game.hpp"
 
-void launchGame() {
+void launchGame(sf::RenderWindow& window, InputHandler& inputHandler) {
 	std::cout << "Launching Game..." << std::endl;
+	Game game(window);
 }
 void launchEditor(sf::RenderWindow& window) {
 	std::cout << "Launching Editor..." << std::endl;
@@ -53,7 +55,8 @@ void mainMenu() {
 			inputHandler.input(window, menu);
 			break;
 		case PLAYING:
-			launchGame();
+			launchGame(window, inputHandler);
+			std::cerr << "Back here" << std::endl;
 			break;
 		case EDITING:
 			launchEditor(window);

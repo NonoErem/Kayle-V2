@@ -129,7 +129,7 @@ void InputHandler::letPlayerAddKey(Action action, sf::RenderWindow& window/*, Me
 
 
 
-EditorInputHandler::EditorInputHandler(sf::RenderWindow& windowHere, Map& mapHere, EditorState editorStateHere, Unique_sprite& selectedSpriteHere, Editor_interface& editorInterfaceHere, Sprites_manager& spritesManagerHere, sf::View& cameraHere) : window(windowHere), map(mapHere), editorState(editorStateHere), selectedSprite(selectedSpriteHere), editorInterface(editorInterfaceHere), spritesManager(spritesManagerHere), camera(cameraHere) {
+EditorInputHandler::EditorInputHandler(sf::RenderWindow& windowHere, Map& mapHere, EditorState editorStateHere, Unique_tile& selectedSpriteHere, Editor_interface& editorInterfaceHere, Sprites_manager& spritesManagerHere, sf::View& cameraHere) : window(windowHere), map(mapHere), editorState(editorStateHere), selectedSprite(selectedSpriteHere), editorInterface(editorInterfaceHere), spritesManager(spritesManagerHere), camera(cameraHere) {
 
 }
 
@@ -212,73 +212,122 @@ void EditorInputHandler::leftClick(sf::Vector2f mouseWorld, sf::Vector2f mouseIn
 
     if (isInPanel) {
         for (size_t i = 0; i < editorInterface.panelItems.size(); ++i) {
-            if (editorInterface.panelItems[i].shape.getGlobalBounds().contains(mouseInterface)) {
+            if (editorInterface.panelItems[i]->shape.getGlobalBounds().contains(mouseInterface)) {
 
-                if (editorInterface.panelItems[i].label.getString() == "Add tile") {
-					std::cerr << "Add tile button clicked" << std::endl;
+                if (editorInterface.panelItems[i]->label.getString() == "Add") {
+					std::cerr << "Add button clicked" << std::endl;
                     HWND hwnd = window.getSystemHandle();
                     std::string selectedFile = openFileDialog(hwnd);
                     int layer = 0;
                     layer = spritesManager.askDefaultLayer(window);
-                    spritesManager.newSprite(window, selectedFile, layer);
-
-				}
-                else if (editorInterface.panelItems[i].label.getString() == "Save") {
+                    if (editorInterface.currentPanel == EditorPanel::Tiles)   spritesManager.newTile(window, selectedFile, layer, false, false);
+                    else   spritesManager.newEntity(window, selectedFile, layer);
+                }
+                else if (editorInterface.panelItems[i]->label.getString() == "Save") {
 					std::cerr << "Save button clicked" << std::endl;
 					map.saveToFile("map.txt");
-                    spritesManager.saveSpriteSet("spriteSet.txt");
+                    spritesManager.saveSpriteSet("tileSet.txt");
+					spritesManager.saveEntitySet("entitySet.txt");
 				}
-                else if (editorInterface.panelItems[i].label.getString() == "Load") {
+                else if (editorInterface.panelItems[i]->label.getString() == "Load") {
 					std::cerr << "Load button clicked" << std::endl;
                     HWND hwnd = window.getSystemHandle();
                     std::string selectedFile = openFileDialog(hwnd);
-                    spritesManager.loadSpriteSet(window, "spriteSet.txt");
+                    spritesManager.loadSpriteSet(window, "tileSet.txt");
+					spritesManager.loadEntitySet(window, "entitySet.txt");
 					map.loadFromFile("map.txt"); //Eventually change "Map.txt" to selectedFile
                 }
-                else if (editorInterface.panelItems[i].label.getString() == "Paint") {
+                else if (editorInterface.panelItems[i]->label.getString() == "Paint") {
                     std::cerr << "Paint button clicked" << std::endl;
                     editorState = PAINT;
                 }
-				else if (editorInterface.panelItems[i].label.getString() == "Erase\nall") {
+				else if (editorInterface.panelItems[i]->label.getString() == "Erase\nall") {
                     std::cerr << "Erase all button clicked" << std::endl;
                     editorState = ERASE_ALL;
 				}
-				else if (editorInterface.panelItems[i].label.getString() == "Remove\ntiles") {
+				else if (editorInterface.panelItems[i]->label.getString() == "Remove\ntiles") {
                     std::cerr << "Remove tiles button clicked" << std::endl;
                     editorState = REMOVE_TILES;
-				}
-                else if (editorInterface.panelItems[i].label.getString() == "Remove\nactors") {
-					std::cerr << "Remove actors button clicked" << std::endl;
+                }
+                else if (editorInterface.panelItems[i]->label.getString() == "Remove\nactors") {
+                    std::cerr << "Remove actors button clicked" << std::endl;
                     editorState = REMOVE_ACTORS;
                 }
-                else if (editorInterface.panelItems[i].label.getString() == " Lay\n er 0") {
-					std::cerr << "Layer 0 button clicked" << std::endl;
+                else if (editorInterface.panelItems[i]->label.getString() == "Panel Tiles") {
+                    std::cerr << "Switched to Tiles panel" << std::endl;
+                    editorInterface.currentPanel = EditorPanel::Tiles;
+                    editorInterface.updatePanel(spritesManager);
+                }
+                else if (editorInterface.panelItems[i]->label.getString() == "Panel Entities") {
+                    std::cerr << "Switched to Entities panel" << std::endl;
+                    editorInterface.currentPanel = EditorPanel::Entities;
+                    editorInterface.updatePanel(spritesManager);
+                }
+                else if (editorInterface.panelItems[i]->label.getString() == "Deflt\nLayer") {
+                    std::cerr << "Default layer button clicked" << std::endl;
+                    editorInterface.layer = selectedSprite.defaultLayer;
+                }
+                else if (editorInterface.panelItems[i]->label.getString() == " Lay\n er 0") {
+                    std::cerr << "Layer 0 button clicked" << std::endl;
                     editorInterface.layer = 0;
                 }
-                else if (editorInterface.panelItems[i].label.getString() == " Lay\n er 1") {
+                else if (editorInterface.panelItems[i]->label.getString() == " Lay\n er 1") {
                     std::cerr << "Layer 1 button clicked" << std::endl;
                     editorInterface.layer = 1;
                 }
-                else if (editorInterface.panelItems[i].label.getString() == " Lay\n er 2") {
+                else if (editorInterface.panelItems[i]->label.getString() == " Lay\n er 2") {
                     std::cerr << "Layer 2 button clicked" << std::endl;
                     editorInterface.layer = 2;
                 }
-                else if (editorInterface.panelItems[i].label.getString() == " Lay\n er 3") {
+                else if (editorInterface.panelItems[i]->label.getString() == " Lay\n er 3") {
                     std::cerr << "Layer 3 button clicked" << std::endl;
                     editorInterface.layer = 3;
                 }
-                else if (editorInterface.panelItems[i].label.getString() == " Lay\n er 4") {
+                else if (editorInterface.panelItems[i]->label.getString() == " Lay\n er 4") {
                     std::cerr << "Layer 4 button clicked" << std::endl;
                     editorInterface.layer = 4;
                 }
-                else if (editorInterface.panelItems[i].label.getString() == " Lay\n er 5") {
+                else if (editorInterface.panelItems[i]->label.getString() == " Lay\n er 5") {
                     std::cerr << "Layer 5 button clicked" << std::endl;
                     editorInterface.layer = 5;
                 }
+                else if (editorInterface.panelItems[i]->label.getString() == " -") {
+                    std::cerr << "Decrease brush size button clicked" << std::endl;
+                    if (editorInterface.brushSize > 1) editorInterface.brushSize--;
+                }
+                else if (editorInterface.panelItems[i]->label.getString() == " +") {
+                    std::cerr << "Increase brush size button clicked" << std::endl;
+                    editorInterface.brushSize++;
+                }
                 else {
-                    selectedSprite = editorInterface.panelItems[i].uniqueSprite;
-                    editorInterface.layer = selectedSprite.defaultLayer;
-					editorInterface.outlineBox.shape.setPosition(editorInterface.panelItems[i].shape.getPosition());
+                    if (editorInterface.currentPanel == EditorPanel::Tiles) {
+                        selectedSprite = *editorInterface.panelItems[i]->uniqueSprite;
+                        editorInterface.layer = selectedSprite.defaultLayer;
+                        editorInterface.outlineBox.shape.setPosition(editorInterface.panelItems[i]->shape.getPosition());
+                    }
+                    else {
+                        selectedEntity = *editorInterface.panelItems[i]->uniqueEntity;
+                        editorInterface.layer = selectedEntity.defaultLayer;
+                        editorInterface.outlineBox.shape.setPosition(editorInterface.panelItems[i]->shape.getPosition());
+                    }
+                }
+            }
+            else if (editorInterface.panelItems[i]->blockEntityShape.getGlobalBounds().contains(mouseInterface)) {
+                if (editorInterface.panelItems[i]->uniqueSprite != nullptr) {
+                    editorInterface.panelItems[i]->uniqueSprite->blockEntity = !editorInterface.panelItems[i]->uniqueSprite->blockEntity;
+                    // Mise à jour instantanée de la couleur du carré (Vert si true, Rouge si false)
+                    editorInterface.panelItems[i]->blockEntityShape.setFillColor(
+                        editorInterface.panelItems[i]->uniqueSprite->blockEntity ? sf::Color::Green : sf::Color::Red
+                    );
+                }
+            }
+            else if (editorInterface.panelItems[i]->blockLightShape.getGlobalBounds().contains(mouseInterface)) {
+                if (editorInterface.panelItems[i]->uniqueSprite != nullptr) {
+                    editorInterface.panelItems[i]->uniqueSprite->blockLight = !editorInterface.panelItems[i]->uniqueSprite->blockLight;
+                    // Mise à jour instantanée de la couleur du carré (Vert si true, Rouge si false)
+                    editorInterface.panelItems[i]->blockLightShape.setFillColor(
+                        editorInterface.panelItems[i]->uniqueSprite->blockLight ? sf::Color::Green : sf::Color::Red
+                    );
                 }
             }
         }
@@ -287,11 +336,21 @@ void EditorInputHandler::leftClick(sf::Vector2f mouseWorld, sf::Vector2f mouseIn
     
     if (!isInPanel) {
         if (editorState == PAINT) {
-            map.setTile(selectedSprite, mouseWorld, editorInterface.layer);
+			if (editorInterface.currentPanel == EditorPanel::Tiles)
+                map.setTile(selectedSprite, mouseWorld, editorInterface.layer, editorInterface.brushSize);
+            else
+				map.setEntity(selectedEntity, mouseWorld, editorInterface.layer);
             std::cerr << "painting" << std::endl;
         }
         if (editorState == ERASE_ALL) {
-            map.resetTile(mouseWorld);
+            map.resetTile(mouseWorld, editorInterface.brushSize);
+            map.removeActor(mouseWorld, editorInterface.brushSize);
+        }
+        if (editorState == REMOVE_ACTORS) {
+            map.removeActor(mouseWorld, editorInterface.brushSize);
+        }
+        if (editorState == REMOVE_TILES) {
+            map.resetTile(mouseWorld, editorInterface.brushSize);
         }
     }
 }
@@ -321,7 +380,7 @@ void EditorInputHandler::mouseWheelDown(sf::Vector2f mouseWorld, sf::Vector2f mo
     }
 
     if (isInPanel) {
-        if (editorInterface.cursorOffset < static_cast<int>(spritesManager.allUniqueSprites.size()) - 1) {
+        if (editorInterface.cursorOffset < static_cast<int>(spritesManager.allUniqueTiles.size()) - 1) {
             editorInterface.cursorOffset++;
         }
     }
@@ -331,6 +390,97 @@ void EditorInputHandler::mouseWheelDown(sf::Vector2f mouseWorld, sf::Vector2f mo
 }
 
 void EditorInputHandler::cooldownUpdate() {
+    if (cooldownLeft > 0) {
+        cooldownLeft -= deltaTime;
+    }
+}
+
+
+
+
+
+
+
+GameInputHandler::GameInputHandler(sf::RenderWindow& windowHere, Player& playerHere, Map& mapHere) : window(windowHere), player(playerHere), map(mapHere)
+{
+}
+
+void GameInputHandler::gameInput()
+{
+    cooldownUpdate();
+    sf::Event event;
+
+    sf::Vector2i mousePixel = sf::Mouse::getPosition(window);
+    sf::Vector2f mouseWorld = window.mapPixelToCoords(mousePixel);
+
+    // Loop to manage every event
+    while (window.pollEvent(event)) {
+        if (event.type == sf::Event::Closed)
+        {
+            std::cerr << "Closing the window" << std::endl;
+            window.close();
+        }
+    }
+
+    float moveX = 0;
+    float moveY = 0;
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+    {
+        std::cerr << "Going right" << std::endl;
+        player.currentDirection = RIGHT;
+        moveX = 1.f;
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
+    {
+        std::cerr << "Going left" << std::endl;
+        player.currentDirection = LEFT;
+        moveX = -1.f;
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+    {
+        std::cerr << "Going down" << std::endl;
+        player.currentDirection = DOWN;
+        moveY = 1.f;
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z))
+    {
+        std::cerr << "Going up" << std::endl;
+        player.currentDirection = UP;
+        moveY = -1.f;
+    }
+
+    if (moveX != 0.f || moveY != 0.f)
+    {
+        // 1. Déplacement et test sur l'axe X
+        player.move(moveX, 0.f);
+        if (map.checkCollision(player.hitbox)) // Assure-toi d'avoir une méthode checkCollision dans Map
+        {
+            player.move(-moveX, 0.f); // Annule le mouvement X en cas de collision
+        }
+
+        // 2. Déplacement et test sur l'axe Y
+        player.move(0.f, moveY);
+        if (map.checkCollision(player.hitbox))
+        {
+            player.move(0.f, -moveY); // Annule le mouvement Y en cas de collision
+        }
+    }
+
+
+
+
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift))
+    {
+        player.baseAttack(mouseWorld);
+        std::cerr << "Base attack" << std::endl;
+    }
+    
+
+
+}
+
+void GameInputHandler::cooldownUpdate()
+{
     if (cooldownLeft > 0) {
         cooldownLeft -= deltaTime;
     }

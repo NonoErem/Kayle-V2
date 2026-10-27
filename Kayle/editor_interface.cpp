@@ -1,310 +1,226 @@
 #include "editor_interface.hpp"
 #include <SFML/Graphics.hpp>
 #include "windows_things.hpp"
-
-
-/*
-Editor_interface::Editor_interface(sf::RenderWindow& window, Map& map, Sprites_manager& spritesManager) : theMap(map){
-
-	
-	if (!font.loadFromFile("ARIAL.TTF")) {
-		std::cerr << "Erreur lors du chargement de la police ARIAL.TTF" << std::endl;
-	}
-	
-
-	int posX = SCREEN_WIDTH * (1 - 0.2);
-	int posY = SCREEN_HEIGHT * (1 - 0.9);
-	int sizeX = SCREEN_WIDTH * 0.2;
-	int sizeY = SCREEN_HEIGHT * 0.8;
-	auto panel = std::make_unique<Interface_panel>(window, map, spritesManager, font, posX, posY, sizeX, sizeY);
-	interfacePanels.push_back(std::move(panel));
-
-}
-
-void Editor_interface::displayInterface(sf::RenderWindow& window) {
-	for (const auto& panelPtr : interfacePanels) {
-		window.draw(panelPtr->shape);
-		for (const auto& objectPtr : panelPtr->panelItems) {
-			objectPtr->display(window);
-		}
-	}
-}
-
-
-
-Interface_panel::Interface_panel(sf::RenderWindow& window, Map& map, Sprites_manager& spritesManager, sf::Font& font, int posX, int posY, int sizeX, int sizeY) {
-	shape.setSize(sf::Vector2f(sizeX, sizeY));
-	//shape.setOutlineColor(sf::Color::Red);
-	//shape.setOutlineThickness(5);
-	shape.setPosition(posX, posY);
-
-	//Line 1
-	int posY_line1 = posY + sizeY * 0.01;
-	int buttonSizeX = 110;
-	int buttonSizeY = 40;
-	float characterSize = 0.8;
-	int posY_spriteSelector = posY + sizeY * 0.21;
-
-	auto selector = std::make_unique<Sprite_selector>(window, spritesManager, font, posX + sizeX * 0.05, posY_spriteSelector, sizeX, sizeY * 0.7);
-	Sprite_selector* selectorPtr = selector.get();
-	auto addSpriteButton = std::make_unique<Interface_button>(window, map, "Add tile", font, [&, selectorPtr]() { spritesManager.newSprite(window); selectorPtr->update(); }, posX + sizeX * 0.05, posY_line1, buttonSizeX, buttonSizeY, characterSize);
-	panelItems.push_back(std::move(addSpriteButton));
-	panelItems.push_back(std::move(selector));
-	auto saveButton = std::make_unique<Interface_button>(window, map, "Save", font, [&]() { BaseGameState = MAINMENU; }, posX + sizeX * 0.35, posY_line1, buttonSizeX, buttonSizeY, characterSize);
-	panelItems.push_back(std::move(saveButton));
-	auto loadButton = std::make_unique<Interface_button>(window, map, "Load", font, [&]() { map.loadFromFile("Map.txt"); }, posX + sizeX * 0.65, posY_line1, buttonSizeX, buttonSizeY, characterSize);
-	panelItems.push_back(std::move(loadButton));
-
-	//Line 2
-	int posY_line2 = posY + sizeY * 0.11;
-	auto paintButton = std::make_unique<Interface_button>(window, map, "Paint", font, [&]() { BaseGameState = MAINMENU; }, posX + sizeX * 0.05, posY_line2, buttonSizeX, buttonSizeY, characterSize);
-	panelItems.push_back(std::move(paintButton));
-	buttonSizeX = 70;
-	characterSize = 0.4f;
-	auto eraserAllButton = std::make_unique<Interface_button>(window, map, "Erase\nall", font, [&]() { BaseGameState = MAINMENU; }, posX + sizeX * 0.35, posY_line2, buttonSizeX, buttonSizeY, characterSize);
-	panelItems.push_back(std::move(eraserAllButton));
-	auto tileEraserButton = std::make_unique<Interface_button>(window, map, "Remove\ntiles", font, [&]() { map.loadFromFile("Map.txt"); }, posX + sizeX * 0.55, posY_line2, buttonSizeX, buttonSizeY, characterSize);
-	panelItems.push_back(std::move(tileEraserButton));
-	auto actorEraserButton = std::make_unique<Interface_button>(window, map, "Remove\nactors", font, [&]() { map.loadFromFile("Map.txt"); }, posX + sizeX * 0.75, posY_line2, buttonSizeX, buttonSizeY, characterSize);
-	panelItems.push_back(std::move(actorEraserButton));
-
-	//Sprites Selector
-	//spriteSelector declared earlier for dependance issues
-	std::cerr << "spriteSelector initialisé\n";
-
-
-}
-
-Interface_button::Interface_button(sf::RenderWindow& window, Map& map, std::string stringLabel, sf::Font& font, std::function<void()> action, int posX, int posY, int buttonSizeX, int buttonSizeY, float characterSize) {
-	
-	shape.setSize(sf::Vector2f(buttonSizeX, buttonSizeY));
-	shape.setPosition(posX, posY);
-	shape.setFillColor(sf::Color::Blue);
-	objectAction = action;
-
-	label.setFont(font);
-	label.setCharacterSize(buttonSizeY*characterSize);
-	label.setFillColor(sf::Color::Red);
-
-	label.setString(stringLabel);
-	label.setStyle(sf::Text::Regular);
-	//float textWidth = label.getLocalBounds().width;
-	label.setPosition(posX,posY);
-
-}
-
-
-
-Sprite_selector::Sprite_selector(sf::RenderWindow& window, Sprites_manager& spritesManager, sf::Font& font, int posX, int posY, int sizeX, int sizeY): spritesManagerHere(spritesManager)
-{
-	pos_X = posX;
-	pos_Y = posY;
-	size_X = sizeX;
-	size_Y = sizeY;
-	spriteButtons.clear();
-	sf::Sprite spriteButton;
-	int endForLoop = std::min(4, static_cast<int>(spritesManagerHere.allSprites.size()));
-	for (int i = 0 + cursorOffset; i <= endForLoop - 1 + cursorOffset; i++) {
-
-		const sf::Texture* texturePtr = spritesManagerHere.allSprites[i].sprite.getTexture();
-
-		if (texturePtr != nullptr) {
-			sf::Sprite spriteButton;
-			spriteButton.setTexture(*texturePtr);
-			spriteButton.setPosition(pos_X, pos_Y + size_Y * 0.2f * i);
-			spriteButtons.push_back(spriteButton);
-		}
-	}
-	std::cerr << "Initialisation du sprite selector\n";
-
-}
-
-void Sprite_selector::update() {
-	std::cerr << "Maj du sprite selector commencée\n";
-	spriteButtons.clear();
-	sf::Sprite spriteButton;
-	int endForLoop = std::min(4, static_cast<int>(spritesManagerHere.allSprites.size()));
-	for (int i = 0 + cursorOffset; i <= endForLoop - 1 + cursorOffset; i++) {
-		
-		const sf::Texture* texturePtr = spritesManagerHere.allSprites[i].sprite.getTexture();
-		
-		if (texturePtr != nullptr) {
-			sf::Sprite spriteButton;
-			spriteButton.setTexture(*texturePtr);
-			spriteButton.setPosition(pos_X, pos_Y + size_Y * 0.2f * i);
-			spriteButtons.push_back(spriteButton);
-		}
-	}
-	std::cerr << "Maj du sprite selector terminée\n";
-
-}
-
-
-void Sprite_selector::display(sf::RenderWindow& window) const {
-	for (const sf::Sprite sprite : spriteButtons) {
-		window.draw(sprite);
-
-		sf::RectangleShape debugBox;
-		debugBox.setPosition(sprite.getPosition());
-		debugBox.setSize(sf::Vector2f(32.f, 32.f)); // Taille arbitraire
-		debugBox.setFillColor(sf::Color::Transparent);
-		debugBox.setOutlineColor(sf::Color::Red);
-		debugBox.setOutlineThickness(2.f);
-		window.draw(debugBox);
-	
-	}
-}
-
-*/
-
-
-
+#include <cmath>
 
 Editor_interface::Editor_interface(Sprites_manager& spritesManager) : outlineBox(0, 0, TILE_SIZE, TILE_SIZE) {
-	
-	panel(spritesManager);
+    if (!font.loadFromFile("ARIAL.TTF")) {
+        std::cerr << "Erreur lors du chargement de la police ARIAL.TTF" << std::endl;
+    }
+
+    // Configuration de la forme principale du panneau
+    int posX = SCREEN_WIDTH * 0.8; // 1 - 0.2
+    int posY = SCREEN_HEIGHT * 0.1; // 1 - 0.9
+    int sizeX = SCREEN_WIDTH * 0.2;
+    int sizeY = SCREEN_HEIGHT * 0.8;
+
+    shape.setSize(sf::Vector2f(sizeX, sizeY));
+    shape.setPosition(posX, posY);
+    shape.setFillColor(sf::Color::White); // Optionnel : un fond semi-transparent pour plus de lisibilité
+
+    // Initialisation unique des éléments
+    initPanel(spritesManager);
 }
 
+void Editor_interface::initPanel(Sprites_manager& spritesManager) {
+    panelItems.clear();
 
-void Editor_interface::panel(Sprites_manager& spritesManager) {
-	if (!font.loadFromFile("ARIAL.TTF")) {
-		std::cerr << "Erreur lors du chargement de la police ARIAL.TTF" << std::endl;
-	}
+    int posX = shape.getPosition().x;
+    int posY = shape.getPosition().y;
+    int sizeX = shape.getSize().x;
+    int sizeY = shape.getSize().y;
 
+    int buttonSizeX = 110;
+    int buttonSizeY = 40;
+    float characterSize = 0.8f;
 
+    // --- Ligne 1 : Actions principales ---
+    int posY_line1 = posY + sizeY * 0.01;
+    panelItems.push_back(std::make_unique<Button>("Add", font, posX + sizeX * 0.05, posY_line1, buttonSizeX, buttonSizeY, characterSize));
+    panelItems.push_back(std::make_unique<Button>("Save", font, posX + sizeX * 0.35, posY_line1, buttonSizeX, buttonSizeY, characterSize));
+    panelItems.push_back(std::make_unique<Button>("Load", font, posX + sizeX * 0.65, posY_line1, buttonSizeX, buttonSizeY, characterSize));
 
-	int posX = SCREEN_WIDTH * (1 - 0.2);
-	int posY = SCREEN_HEIGHT * (1 - 0.9);
-	int sizeX = SCREEN_WIDTH * 0.2;
-	int sizeY = SCREEN_HEIGHT * 0.8;
+    // --- Ligne 2 : Outils d'édition ---
+    int posY_line2 = posY + sizeY * 0.11;
+    panelItems.push_back(std::make_unique<Button>("Paint", font, posX + sizeX * 0.05, posY_line2, buttonSizeX, buttonSizeY, characterSize));
 
-	shape.setSize(sf::Vector2f(sizeX, sizeY));
-	shape.setPosition(posX, posY);
+    int smallBtnX = 70;
+    float smallCharSize = 0.4f;
+    panelItems.push_back(std::make_unique<Button>("Erase\nall", font, posX + sizeX * 0.35, posY_line2, smallBtnX, buttonSizeY, smallCharSize));
+    panelItems.push_back(std::make_unique<Button>("Remove\ntiles", font, posX + sizeX * 0.55, posY_line2, smallBtnX, buttonSizeY, smallCharSize));
+    panelItems.push_back(std::make_unique<Button>("Remove\nactors", font, posX + sizeX * 0.75, posY_line2, smallBtnX, buttonSizeY, smallCharSize));
 
+    // --- Ligne 3 : Sélection du Panneau (Tiles / Entities) ---
+    int posY_panelSelect = posY + sizeY * 0.21;
+    int panelBtnWidth = sizeX * 0.42;
 
+    auto tilesBtn = std::make_unique<Button>("Panel Tiles", font, posX + sizeX * 0.05, posY_panelSelect, panelBtnWidth, buttonSizeY, smallCharSize);
+    // On met en valeur le bouton actif (Cyan si actif, Bleu par défaut)
+    if (currentPanel == EditorPanel::Tiles) {
+        tilesBtn->shape.setFillColor(sf::Color::Cyan);
+        tilesBtn->label.setFillColor(sf::Color::Black);
+    }
+    panelItems.push_back(std::move(tilesBtn));
 
-	//Line 1
-	int posY_line1 = posY + sizeY * 0.01;
-	int buttonSizeX = 110;
-	int buttonSizeY = 40;
-	float characterSize = 0.8;
-	int posY_spriteSelector = posY + sizeY * 0.21;
+    auto entitiesBtn = std::make_unique<Button>("Panel Entities", font, posX + sizeX * 0.53, posY_panelSelect, panelBtnWidth, buttonSizeY, smallCharSize);
+    if (currentPanel == EditorPanel::Entities) {
+        entitiesBtn->shape.setFillColor(sf::Color::Cyan);
+        entitiesBtn->label.setFillColor(sf::Color::Black);
+    }
+    panelItems.push_back(std::move(entitiesBtn));
 
-	Button addSpriteButton("Add tile", font, posX + sizeX * 0.05, posY_line1, buttonSizeX, buttonSizeY, characterSize);
-	panelItems.push_back(addSpriteButton);
-	Button saveButton("Save", font, posX + sizeX * 0.35, posY_line1, buttonSizeX, buttonSizeY, characterSize);
-	panelItems.push_back(saveButton);
-	Button loadButton("Load", font, posX + sizeX * 0.65, posY_line1, buttonSizeX, buttonSizeY, characterSize);
-	panelItems.push_back(loadButton);
+    // --- Sélecteur de Sprites (décalé à 0.31 pour laisser la place) ---
+    int posY_spriteSelector = posY + sizeY * 0.31;
+    int spritesByPage = 5;
 
-	//Line 2
-	int posY_line2 = posY + sizeY * 0.11;
-	Button paintButton("Paint", font, posX + sizeX * 0.05, posY_line2, buttonSizeX, buttonSizeY, characterSize);
-	panelItems.push_back(paintButton);
-	buttonSizeX = 70;
-	characterSize = 0.4f;
-	Button eraserAllButton("Erase\nall", font, posX + sizeX * 0.35, posY_line2, buttonSizeX, buttonSizeY, characterSize);
-	panelItems.push_back(eraserAllButton);
-	Button tileEraserButton("Remove\ntiles", font, posX + sizeX * 0.55, posY_line2, buttonSizeX, buttonSizeY, characterSize);
-	panelItems.push_back(tileEraserButton);
-	Button actorEraserButton("Remove\nactors", font, posX + sizeX * 0.75, posY_line2, buttonSizeX, buttonSizeY, characterSize);
-	panelItems.push_back(actorEraserButton);
+    if (currentPanel == EditorPanel::Tiles) {
+        int endForLoop = std::min(spritesByPage + cursorOffset, static_cast<int>(spritesManager.allUniqueTiles.size()));
 
-	//Sprite Selector
-	int spritesByPage = 5;
-	int endForLoop = std::min(spritesByPage + cursorOffset, static_cast<int>(spritesManager.allUniqueSprites.size()));
-	for (int i = cursorOffset; i < endForLoop; i++) {
-		std::string label = std::to_string(spritesManager.allUniqueSprites[i].defaultLayer);
-		Sprite_button spriteButton(label, font, posX + sizeX * 0.05, posY_spriteSelector + sizeY * 0.7 * 0.2f * (i - cursorOffset), TILE_SIZE, TILE_SIZE, characterSize);
+        for (int i = cursorOffset; i < endForLoop; i++) {
+            std::string label = std::to_string(spritesManager.allUniqueTiles[i].defaultLayer);
 
-		//const sf::Texture* texturePtr = spritesManager.allUniqueSprites[i].sprite.getTexture();
+            auto spriteButton = std::make_unique<Sprite_button>(
+                label, font, posX + sizeX * 0.05,
+                posY_spriteSelector + sizeY * 0.6 * 0.2f * (i - cursorOffset),
+                TILE_SIZE, TILE_SIZE, smallCharSize
+            );
 
-		//if (texturePtr != nullptr) {
-		spriteButton.uniqueSprite = spritesManager.allUniqueSprites[i];
-		spriteButton.uniqueSprite.sprite.setPosition(std::floor(posX + sizeX * 0.05), std::floor(posY_spriteSelector + sizeY * 0.7 * 0.2f * (i - cursorOffset)));
-		//}
-		panelItems.push_back(spriteButton);
-	}
+            spriteButton->uniqueSprite = &spritesManager.allUniqueTiles[i];
+            spriteButton->uniqueSprite->sprite.setPosition(
+                std::floor(posX + sizeX * 0.05),
+                std::floor(posY_spriteSelector + sizeY * 0.6 * 0.2f * (i - cursorOffset))
+            );
 
-	//Layer line
-	int posY_layerLine = posY + sizeY * 0.81;
-	buttonSizeX = 40;
-	Button defaultLayerButton("Deflt\nLayer", font, posX + sizeX * 0.05, posY_layerLine, buttonSizeX, buttonSizeY, characterSize);
-	panelItems.push_back(defaultLayerButton);
-	Button layer0Button(" Lay\n er 0", font, posX + sizeX * 0.20, posY_layerLine, buttonSizeX, buttonSizeY, characterSize);
-	panelItems.push_back(layer0Button);
-	Button layer1Button(" Lay\n er 1", font, posX + sizeX * 0.35, posY_layerLine, buttonSizeX, buttonSizeY, characterSize);
-	panelItems.push_back(layer1Button);
-	Button layer2Button(" Lay\n er 2", font, posX + sizeX * 0.50, posY_layerLine, buttonSizeX, buttonSizeY, characterSize);
-	panelItems.push_back(layer2Button);
-	Button layer3Button(" Lay\n er 3", font, posX + sizeX * 0.65, posY_layerLine, buttonSizeX, buttonSizeY, characterSize);
-	panelItems.push_back(layer3Button);
-	Button layer4Button(" Lay\n er 4", font, posX + sizeX * 0.80, posY_layerLine, buttonSizeX, buttonSizeY, characterSize);
-	panelItems.push_back(layer4Button);
+            spriteButton->blockEntityShape.setFillColor(spriteButton->uniqueSprite->blockEntity ? sf::Color::Green : sf::Color::Red);
+            spriteButton->blockLightShape.setFillColor(spriteButton->uniqueSprite->blockLight ? sf::Color::Green : sf::Color::Red);
 
+            panelItems.push_back(std::move(spriteButton));
+        }
+    }
+    else {
+        int endForLoop = std::min(spritesByPage + cursorOffset, static_cast<int>(spritesManager.allUniqueEntities.size()));
 
+        for (int i = cursorOffset; i < endForLoop; i++) {
+            std::string label = std::to_string(spritesManager.allUniqueEntities[i].defaultLayer);
+
+            auto spriteButton = std::make_unique<Sprite_button>(
+                label, font, posX + sizeX * 0.05,
+                posY_spriteSelector + sizeY * 0.6 * 0.2f * (i - cursorOffset),
+                TILE_SIZE, TILE_SIZE, smallCharSize
+            );
+
+            spriteButton->uniqueEntity = &spritesManager.allUniqueEntities[i];
+            spriteButton->uniqueEntity->sprite.setPosition(
+                std::floor(posX + sizeX * 0.05),
+                std::floor(posY_spriteSelector + sizeY * 0.6 * 0.2f * (i - cursorOffset))
+            );
+
+            spriteButton->blockEntityShape.setFillColor(spriteButton->uniqueEntity->blockEntity ? sf::Color::Green : sf::Color::Red);
+            spriteButton->blockLightShape.setFillColor(spriteButton->uniqueEntity->blockLight ? sf::Color::Green : sf::Color::Red);
+
+            panelItems.push_back(std::move(spriteButton));
+        }
+    }
+    // --- Ligne des calques (Layers) ---
+    int posY_layerLine = posY + sizeY * 0.81;
+    int layerBtnSizeX = 40;
+    panelItems.push_back(std::make_unique<Button>("Deflt\nLayer", font, posX + sizeX * 0.05, posY_layerLine, layerBtnSizeX, buttonSizeY, smallCharSize));
+    panelItems.push_back(std::make_unique<Button>(" Lay\n er 0", font, posX + sizeX * 0.20, posY_layerLine, layerBtnSizeX, buttonSizeY, smallCharSize));
+    panelItems.push_back(std::make_unique<Button>(" Lay\n er 1", font, posX + sizeX * 0.35, posY_layerLine, layerBtnSizeX, buttonSizeY, smallCharSize));
+    panelItems.push_back(std::make_unique<Button>(" Lay\n er 2", font, posX + sizeX * 0.50, posY_layerLine, layerBtnSizeX, buttonSizeY, smallCharSize));
+    panelItems.push_back(std::make_unique<Button>(" Lay\n er 3", font, posX + sizeX * 0.65, posY_layerLine, layerBtnSizeX, buttonSizeY, smallCharSize));
+    panelItems.push_back(std::make_unique<Button>(" Lay\n er 4", font, posX + sizeX * 0.80, posY_layerLine, layerBtnSizeX, buttonSizeY, smallCharSize));
+
+    // --- Ligne de la taille du pinceau (Brush) ---
+    int posY_brushLine = posY + sizeY * 0.91;
+    float brushCharacterSize = 0.9f;
+    int brushSquareSize = buttonSizeY;
+
+    panelItems.push_back(std::make_unique<Button>(" -", font, posX + sizeX * 0.05, posY_brushLine, brushSquareSize, buttonSizeY, brushCharacterSize));
+    panelItems.push_back(std::make_unique<Button>(std::to_string(brushSize), font, posX + sizeX * 0.20, posY_brushLine, brushSquareSize, buttonSizeY, brushCharacterSize));
+    panelItems.push_back(std::make_unique<Button>(" +", font, posX + sizeX * 0.35, posY_brushLine, brushSquareSize, buttonSizeY, brushCharacterSize));
 }
 
-//Maybe I can do it another way in order to avoid update every frame
+// Appelé uniquement lorsque l'utilisateur change de page ou modifie une valeur (ex: brushSize)
 void Editor_interface::updatePanel(Sprites_manager& spritesManager) {
-	panelItems.clear();
-
-	panel(spritesManager);
+    initPanel(spritesManager);
 }
 
-void Editor_interface::displayPanel(sf::RenderWindow& window) const
-{
-	window.draw(shape);
-	for (const auto& item : panelItems) {
-		window.draw(item.shape);
-		window.draw(item.uniqueSprite.sprite);
-		window.draw(item.label);
-	}
-	window.draw(outlineBox.shape);
+void Editor_interface::displayPanel(sf::RenderWindow& window) const {
+    window.draw(shape);
+    for (const auto& itemPtr : panelItems) {
+        const auto& item = *itemPtr; // Déférencement du unique_ptr
+        window.draw(item.shape);
+        if (item.uniqueSprite != nullptr)
+            window.draw(item.uniqueSprite->sprite);
+        if (item.uniqueEntity != nullptr)
+            window.draw(item.uniqueEntity->sprite);
+        window.draw(item.label);
+        window.draw(item.blockEntityShape);
+        window.draw(item.blockEntityLabel);
+        window.draw(item.blockLightShape);
+        window.draw(item.blockLightLabel);
+    }
+    window.draw(outlineBox.shape);
 }
-
 Items::Items() {
-	shape.setFillColor(sf::Color::Blue);
+    shape.setFillColor(sf::Color::Blue);
 }
 
 Button::Button(std::string stringLabel, sf::Font& font, int posX, int posY, int buttonSizeX, int buttonSizeY, float characterSize) {
+    shape.setSize(sf::Vector2f(buttonSizeX, buttonSizeY));
+    shape.setPosition(posX, posY);
+    shape.setFillColor(sf::Color::Blue);
 
-	shape.setSize(sf::Vector2f(buttonSizeX, buttonSizeY));
-	shape.setPosition(posX, posY);
-	shape.setFillColor(sf::Color::Blue);
-
-	label.setFont(font);
-	label.setCharacterSize(buttonSizeY * characterSize);
-	label.setFillColor(sf::Color::Red);
-
-	label.setString(stringLabel);
-	label.setStyle(sf::Text::Regular);
-	label.setPosition(posX, posY);
+    label.setFont(font);
+    label.setCharacterSize(buttonSizeY * characterSize);
+    label.setFillColor(sf::Color::Red);
+    label.setString(stringLabel);
+    label.setStyle(sf::Text::Regular);
+    label.setPosition(posX, posY);
 }
 
-Sprite_button::Sprite_button(std::string stringLabel, sf::Font& font, int posX, int posY, int buttonSizeX, int buttonSizeY, float characterSize)
-{
-	shape.setSize(sf::Vector2f(buttonSizeX, buttonSizeY));
-	shape.setPosition(posX, posY);
-	shape.setFillColor(sf::Color::Blue);
+Sprite_button::Sprite_button(std::string stringLabel, sf::Font& font, int posX, int posY, int buttonSizeX, int buttonSizeY, float characterSize) {
+    shape.setSize(sf::Vector2f(buttonSizeX, buttonSizeY));
+    shape.setPosition(posX, posY);
+    shape.setFillColor(sf::Color::Blue);
 
-	label.setFont(font);
-	label.setCharacterSize(buttonSizeY * characterSize);
-	label.setFillColor(sf::Color::Red);
+    label.setFont(font);
+    label.setCharacterSize(buttonSizeY * characterSize);
+    label.setFillColor(sf::Color::Red);
+    label.setString(stringLabel);
+    label.setStyle(sf::Text::Regular);
+    label.setPosition(posX + TILE_SIZE, posY);
 
-	label.setString(stringLabel);
-	label.setStyle(sf::Text::Regular);
-	label.setPosition(posX + TILE_SIZE, posY);
+    float squareSize = buttonSizeY / 2.f;
 
+    blockEntityShape.setSize(sf::Vector2f(buttonSizeX / 2.f, buttonSizeY / 2.f));
+    blockEntityShape.setPosition(posX + buttonSizeX * 2, posY);
+    blockEntityShape.setFillColor(sf::Color::Blue);
 
+    blockEntityLabel.setFont(font);
+    blockEntityLabel.setCharacterSize(buttonSizeY * characterSize);
+    blockEntityLabel.setFillColor(sf::Color::Red);
+    blockEntityLabel.setString("blockEntity");
+    blockEntityLabel.setStyle(sf::Text::Regular);
+    blockEntityLabel.setPosition(posX + buttonSizeX * 2.f + squareSize + 5.f, posY);
+
+    blockLightShape.setSize(sf::Vector2f(buttonSizeX / 2.f, buttonSizeY / 2.f));
+    blockLightShape.setPosition(posX + buttonSizeX * 2.f, posY + buttonSizeY / 2.f);
+    blockLightShape.setFillColor(sf::Color::Blue);
+
+    blockLightLabel.setFont(font);
+    blockLightLabel.setCharacterSize(buttonSizeY * characterSize);
+    blockLightLabel.setFillColor(sf::Color::Red);
+    blockLightLabel.setString("blockLight");
+    blockLightLabel.setStyle(sf::Text::Regular);
+    blockLightLabel.setPosition(posX + buttonSizeX * 2.f + squareSize + 5.f, posY + buttonSizeY / 2.f);
 }
-
 
 OutlineBox::OutlineBox(int posX, int posY, int sizeX, int sizeY) {
-	shape.setPosition(posX - 2, posY - 2);
-	shape.setSize(sf::Vector2f(sizeX, sizeY));
-	shape.setFillColor(sf::Color::Transparent);
-	shape.setOutlineColor(sf::Color::Red);
-	shape.setOutlineThickness(2.f);
-
+    shape.setPosition(posX - 2, posY - 2);
+    shape.setSize(sf::Vector2f(sizeX, sizeY));
+    shape.setFillColor(sf::Color::Transparent);
+    shape.setOutlineColor(sf::Color::Red);
+    shape.setOutlineThickness(2.f);
 }

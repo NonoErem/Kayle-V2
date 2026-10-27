@@ -1,0 +1,4 @@
+## EFFECT_SET SIZE ##
+1
+## EFFECT_SET DATA ##
+0 1 0 32 32 2 0.3 D:\Documents\Projets Visual Studio\Kayle remake\Kayle\Textures\effects\attack\sword_slash.png

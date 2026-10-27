@@ -1,5 +1,4 @@
 #include "editor.hpp"
-#include "unique_sprite.hpp"
 
 
 Editor::Editor(sf::RenderWindow& window) {
@@ -15,9 +14,9 @@ void Editor::run(sf::RenderWindow& window) {
     Map map(spritesManager);
     HWND hwnd = window.getSystemHandle();
     std::string selectedFile = openFileDialog(hwnd);
-    spritesManager.newSprite(window, selectedFile, 0);
+    spritesManager.newTile(window, selectedFile, 0, false, false);
 
-    Unique_sprite& selectedSprite = spritesManager.allUniqueSprites[0];
+    Unique_tile& selectedSprite = spritesManager.allUniqueTiles[0];
     Editor_interface editorInterface(spritesManager);
     sf::View camera = window.getDefaultView();
     sf::View interfaceView = window.getDefaultView();

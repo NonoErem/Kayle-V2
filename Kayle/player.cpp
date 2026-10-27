@@ -1,36 +1,22 @@
-// player.cpp
 #include "player.hpp"
-#include "config.hpp"
-#include <SFML/Window/Keyboard.hpp>
-#include <memory>
-#include "projectile.hpp"
-#include "map_old.hpp"
-#include <iostream>
 
-
-
-Player::Player() {
-    
-    // Charge les deux textures pour chaque direction
+Player::Player(Map& mapHere) : map(mapHere) {
 
     textureIdle[0].loadFromFile("Textures/player/back_player_A.png");
-    textureIdle[1].loadFromFile("Textures/player/back_player_A.png");
+    textureIdle[1].loadFromFile("Textures/player/back_player_B.png");
 
-
-	// Pour avoir le perso en x64, il faut que la première texture utilisée soit en x64
     textureDown[0].loadFromFile("Textures/player/front_player_A.png");
-    textureDown[1].loadFromFile("Textures/player/front_player_A.png");
+    textureDown[1].loadFromFile("Textures/player/front_player_B.png");
 
     textureUp[0].loadFromFile("Textures/player/back_player_A.png");
-    textureUp[1].loadFromFile("Textures/player/back_player_A.png");
+    textureUp[1].loadFromFile("Textures/player/back_player_B.png");
 
     textureLeft[0].loadFromFile("Textures/player/left_player_A.png");
-    textureLeft[1].loadFromFile("Textures/player/left_player_A.png");
+    textureLeft[1].loadFromFile("Textures/player/left_player_B.png");
 
     textureRight[0].loadFromFile("Textures/player/right_player_A.png");
-    textureRight[1].loadFromFile("Textures/player/right_player_A.png");
+    textureRight[1].loadFromFile("Textures/player/right_player_B.png");
 
-    // Textures d'attaque
     textureMeleeDown[0].loadFromFile("Textures/player/front_player_A.png");
     textureMeleeDown[1].loadFromFile("Textures/player/front_player_A.png");
 
@@ -44,25 +30,170 @@ Player::Player() {
     textureMeleeRight[1].loadFromFile("Textures/player/melee_right_player_B.png");
 
 
-    
+
     // Taille et couleur héritées de Entity constructor
-
+    sprite.setScale(1, 1);
     sprite.setTexture(textureIdle[0]);
-    sprite.setPosition(100.f, 100.f);
-//    sprite.setScale(0.5f * VIEW_SCALE, 0.5f * VIEW_SCALE);
+    sprite.setPosition(posX, posY);
+    hitbox.left = posX;
+    hitbox.top = posY;
 
-
-    speed = 200.f;
-    id = "pl";
-	maxHP = 100.f; // Points de vie maximum du joueur
-    HP = maxHP; // Points de vie du joueur
-    team = 0;
-    vulnerable = true;
 }
 
-void Player::changeTexture(float dt) {
+void Player::playerUpdate()
+{
+    changeTexture();
+    floatingMovement();
+	attackCooldownLeft -= deltaTime;
+	actionDurationLeft -= deltaTime;
+    switch (currentDirection) {
+    case RIGHT:
+        frameDuration = normalFrameDuration;
+        break;
+    case LEFT:
+        frameDuration = normalFrameDuration;
+        break;
+    case DOWN:
+        frameDuration = normalFrameDuration;
+        break;
+    case UP:
+        frameDuration = normalFrameDuration;
+        break;
+    case RIGHT_MELEE:
+        frameDuration = meleeFrameDuration;
+        if (actionDurationLeft <= 0) {
+            currentDirection = RIGHT;
+        }
+        break;
+    case LEFT_MELEE:
+        frameDuration = meleeFrameDuration;
+        if (actionDurationLeft <= 0) {
+            currentDirection = LEFT;
+        }
+        break;
+    case DOWN_MELEE:
+        frameDuration = meleeFrameDuration;
+        if (actionDurationLeft <= 0) {
+            currentDirection = DOWN;
+        }
+        break;
+    case UP_MELEE:
+        frameDuration = meleeFrameDuration;
+        if (actionDurationLeft <= 0) {
+            currentDirection = UP;
+        }
+        break;
+	default:
+		frameDuration = normalFrameDuration;
+		break;
+    }
 
-    int frameIndex = useFirstTexture ? 1 : 0;
+
+}
+
+sf::FloatRect Player::getAttackBounds() const {
+    sf::Vector2f pos = hitbox.getPosition();
+    float attackSize = TILE_SIZE/2.f;
+
+    switch (currentDirection) {
+    case RIGHT_MELEE:
+        return sf::FloatRect(pos.x + TILE_SIZE, pos.y, attackSize, TILE_SIZE);
+    case LEFT_MELEE:
+        return sf::FloatRect(pos.x - attackSize, pos.y, attackSize, TILE_SIZE);
+    case DOWN_MELEE:
+        return sf::FloatRect(pos.x, pos.y + TILE_SIZE, TILE_SIZE, attackSize);
+    case UP_MELEE:
+        return sf::FloatRect(pos.x, pos.y - attackSize, TILE_SIZE, attackSize);
+    default:
+        return sf::FloatRect(0, 0, 0, 0); // Pas d'attaque en cours
+    }
+}
+
+
+void Player::move(float moveX, float moveY) {
+    float total = std::sqrt(moveX * moveX + moveY * moveY);
+    if (total == 0) return;
+    moveX /= total;
+    moveY /= total;
+    sf::Vector2f movement;
+    movement = sf::Vector2f(moveX, moveY);
+    movement *= effectiveSpeed * deltaTime;
+    sprite.move(movement);
+	posX = posX + movement.x;
+	posY = posY + movement.y;
+	hitbox.left = posX;
+	hitbox.top = posY;
+}
+
+void Player::baseAttack(sf::Vector2f mouseWorld)
+{
+    if (attackCooldownLeft > 0.f) return;
+
+    if (abs(mouseWorld.x - sprite.getPosition().x) >=
+        abs(mouseWorld.y - sprite.getPosition().y))
+    {
+        if (mouseWorld.x >= sprite.getPosition().x)
+            currentDirection = RIGHT_MELEE;
+        else
+            currentDirection = LEFT_MELEE;
+    }
+    else
+    {
+        if (mouseWorld.y >= sprite.getPosition().y)
+            currentDirection = DOWN_MELEE;
+        else
+            currentDirection = UP_MELEE;
+    }
+
+    sf::FloatRect attackArea = getAttackBounds();
+    map.handlePlayerAttack(attackArea, 50);
+    switch (currentDirection) {
+	case RIGHT_MELEE:
+		//sprite.setTexture(textureMeleeRight[0]);
+        map.setEffect(0, sprite.getPosition().x + TILE_SIZE*1.5, sprite.getPosition().y, -1, 2);
+        break;
+	case LEFT_MELEE:
+		//sprite.setTexture(textureMeleeLeft[0]);
+        map.setEffect(0, sprite.getPosition().x - TILE_SIZE*0.5, sprite.getPosition().y, 1, 2);
+
+		break;
+	case DOWN_MELEE:
+		//sprite.setTexture(textureMeleeDown[0]);
+        map.setEffect(0, sprite.getPosition().x - TILE_SIZE * 0.5, sprite.getPosition().y, 1, 2);
+
+		break;
+	case UP_MELEE:
+		//sprite.setTexture(textureMeleeUp[0]);
+        map.setEffect(0, sprite.getPosition().x - TILE_SIZE * 0.5, sprite.getPosition().y, 1, 2);
+
+        break;
+    default:
+        //sprite.setTexture(textureMeleeRight[0]);
+        map.setEffect(0, sprite.getPosition().x - TILE_SIZE * 0.5, sprite.getPosition().y, 1, 2);
+
+        break;
+    }
+
+    attackCooldownLeft = attackCooldown;
+    actionDurationLeft = meleeDuration;
+    frameElapsed = 0.f;
+    frameIndex = 0;
+    frameDuration = 0.3f;
+}
+
+void Player::changeTexture() {
+
+
+    frameElapsed += deltaTime;
+    if (frameElapsed >= frameDuration)
+    {
+        frameElapsed = 0;
+        frameIndex += 1;
+        if (frameIndex > 1) {
+            frameIndex = 0;
+        }
+        std::cerr << frameIndex << std::endl;
+    }
 
     switch (currentDirection) {
     case DOWN:
@@ -97,149 +228,32 @@ void Player::changeTexture(float dt) {
     }
 }
 
-int Player::getEffectiveSpeed() {
-    return effectiveSpeed;
-}
-
-
-std::string Player::getId() const {
-    return id;
-}
-void Player::meleeWeapon(Map_old& map, const sf::RenderWindow& window) {
-    sf::Vector2f playerPos = this->sprite.getPosition();
-
-    sf::Vector2i mousePixel = sf::Mouse::getPosition(window);
-    sf::Vector2f mouseWorld = window.mapPixelToCoords(mousePixel);
-
-    sf::Vector2f startPosition = this->sprite.getPosition();
-    sf::Vector2f direction = mouseWorld - startPosition;
-
-    std::unique_ptr<MeleeAttack> projectile = std::make_unique<MeleeAttack>(this->getPosition(), direction, this->team);
-
-
-    sf::Vector2f projectileSize(projectile->getHitBox().width, projectile->getHitBox().height);
-    float offsetX = (sprite.getGlobalBounds().width - projectileSize.x) / 2.f;
-    float offsetY = (sprite.getGlobalBounds().height - projectileSize.y) / 2.f;
-    if (abs(mouseWorld.x - playerPos.x) > abs(mouseWorld.y - playerPos.y)) {
-        if (mouseWorld.x > playerPos.x) {
-            offsetX += TILE_SIZE / 2.f;
-            currentDirection = RIGHT_MELEE;
-        }
-        else {
-            offsetX -= TILE_SIZE / 2.f;
-            currentDirection = LEFT_MELEE;
-        }
-    }
-    else {
-        if (mouseWorld.y > playerPos.y) {
-            offsetY += TILE_SIZE / 2.f;
-            currentDirection = DOWN_MELEE;
-        }
-        else {
-            offsetY -= TILE_SIZE / 2.f;
-            currentDirection = UP_MELEE;
-        }
-    }
-    projectile->setPosition(startPosition.x + offsetX, startPosition.y + offsetY);
-
-    map.addActor(std::move(projectile));
-}
-
-void Player::sendProjectile(Map_old& map, const sf::RenderWindow& window) {  
-   // Créer un projectile à la position actuelle du joueur  
-   sf::Vector2f playerPos = this->sprite.getPosition();  
-
-   sf::Vector2i mousePixel = sf::Mouse::getPosition(window);  
-   sf::Vector2f mouseWorld = window.mapPixelToCoords(mousePixel);  
-
-   sf::Vector2f startPosition = this->sprite.getPosition();  
-   sf::Vector2f direction = mouseWorld - startPosition;  
-
-   std::unique_ptr<Projectile> projectile = std::make_unique<Projectile>(this->getPosition(), direction, this->team, damage);  
-
-   sf::Vector2f projectileSize(projectile->getHitBox().width, projectile->getHitBox().height);  
-   float offsetX = (sprite.getGlobalBounds().width - projectileSize.x) / 2.f;
-   float offsetY = (sprite.getGlobalBounds().height - projectileSize.y) / 2.f;
-   projectile->setPosition(startPosition.x + offsetX, startPosition.y + offsetY);
-   map.addActor(std::move(projectile));  
-}
-
-
-
-void Player::sendFirstSpell(Map_old& map, const sf::RenderWindow& window) {
-    sf::Vector2f playerPos = this->sprite.getPosition();
-	playerPos = sf::Vector2f(playerPos.x + TILE_SIZE / 4.f, playerPos.y + TILE_SIZE / 4.f); //Remplacer les 4.f par 2.f quand le perso sera en 64x64 (c'est fait)
-
-    sf::Vector2i mousePixel = sf::Mouse::getPosition(window);
-    sf::Vector2f mouseWorld = window.mapPixelToCoords(mousePixel);
-
-    sf::Vector2f direction = mouseWorld - playerPos;
-    float len = std::sqrt(direction.x * direction.x + direction.y * direction.y);
-    if (len != 0.f)
-        direction /= len;
-    else
-        direction = sf::Vector2f(1.f, 0.f);
-
-    // Calcul angle
-    float angle = std::atan2(direction.y, direction.x) * 180.f / 3.14159f;
-
-    // Créer le sort directement à la position du joueur
-    std::unique_ptr<FirstSpell> projectile = std::make_unique<FirstSpell>(playerPos, direction, this->team);
-
-    // Appliquer la rotation
-    projectile->setRotation(angle + 90.f);
-
-    // Ajouter à la map
-    map.addActor(std::move(projectile));
-}
-
-
-
-
-void Player::update(float dt) {
-    if (attackCooldown > 0.f)
-        attackCooldown -= dt;
-    if (firstSpellCooldown > 0.f)
-        firstSpellCooldown -= dt;
-    if (secondSpellCooldown > 0.f)
-        secondSpellCooldown -= dt;
-    if (!vulnerable) {
-        vulnerabilityCooldown -= dt;
-    }
-	if (vulnerabilityCooldown <= 0.f) {
-		vulnerable = true; // Le joueur redevient vulnérable
+void Player::floatingMovement()
+{
+	if (currentDirection != IDLE && currentDirection != UP && currentDirection != DOWN && currentDirection != LEFT && currentDirection != RIGHT)
+	{
+		return;
 	}
-    if (HP <= 0.f) {
-        isAlive = false; // Marquer le joueur comme mort
+    float floatingAmplitude = 5.f;
+
+    // Progression de l'animation entre 0 et 1
+    float progress = frameElapsed / frameDuration;
+
+    // Éviter les valeurs en dehors de l'intervalle attendu
+    progress = std::clamp(progress, 0.f, 1.f);
+
+    float offsetY;
+
+    if (frameIndex == 0)
+    {
+        // Le sprite monte progressivement
+        offsetY = floatingAmplitude * progress;
+    }
+    else
+    {
+        // Le sprite redescend progressivement
+        offsetY = floatingAmplitude * (1.f - progress);
     }
 
-
-    if (quickenedDurationLeft > 0.f) {
-        std::cout << "QUICKENED\n";
-
-        effectiveSpeed = speed * (1.f + quickenedBy);
-
-        quickenedDurationLeft -= dt; // On décrémente la durée restante du boost de vitesse
-        if (quickenedDurationLeft <= 0.f) {
-            quickenedBy = 0.f; // Le boost de vitesse est terminé
-            quickenedDurationLeft = 0.f;
-        }
-    }
-    else {
-        effectiveSpeed = speed;
-    }
-
-
-    // Animation :
-    animationTimer += dt;
-    if (animationTimer >= animationSwitchTime) {
-        animationTimer = 0.f;
-        useFirstTexture = !useFirstTexture;
-
-        changeTexture(dt);
-    }
-
-
-    
-
+    sprite.setPosition(posX, posY - offsetY);
 }

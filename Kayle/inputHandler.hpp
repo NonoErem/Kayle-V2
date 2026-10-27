@@ -5,6 +5,7 @@
 #include "menu.hpp"
 #include "editor_interface.hpp"
 #include "editorState.hpp"
+#include "player.hpp"
 
 
 enum class Action {
@@ -34,7 +35,7 @@ private:
 
 class EditorInputHandler {
 public:
-	EditorInputHandler(sf::RenderWindow& window, Map& map, EditorState editorState, Unique_sprite& selectedSprite, Editor_interface& editorInterface, Sprites_manager& spritesManager, sf::View& cameraHere);
+	EditorInputHandler(sf::RenderWindow& window, Map& map, EditorState editorState, Unique_tile& selectedSprite, Editor_interface& editorInterface, Sprites_manager& spritesManager, sf::View& cameraHere);
 	void editorInput();
 
 	void leftClick(sf::Vector2f mousPos, sf::Vector2f mouseInterface);
@@ -47,7 +48,8 @@ private:
 	sf::RenderWindow& window;
 	Map& map;
 	EditorState editorState;
-	Unique_sprite selectedSprite;
+	Unique_tile selectedSprite;
+	Unique_entity selectedEntity;
 	Editor_interface& editorInterface;
 	Sprites_manager& spritesManager;
 	sf::View& camera;
@@ -59,3 +61,17 @@ private:
 
 
 
+class GameInputHandler {
+public: 
+	GameInputHandler(sf::RenderWindow& window, Player& player, Map& mapHere);
+	void gameInput();
+	void cooldownUpdate();
+private:
+	sf::RenderWindow& window;
+	Player& player;
+	Map& map;
+
+	float cooldown = 0.1f;
+	float cooldownLeft = 0.1f; //Don't set its base value on 0
+
+};

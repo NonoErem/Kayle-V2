@@ -1,0 +1,8 @@
+## SPRITE_SET SIZE ##
+5
+## SPRITE_SET DATA ##
+0 0 0 D:\Documents\Projets Visual Studio\Kayle remake\Kayle\Textures\terrain\grass.png
+1 0 0 D:\Documents\Projets Visual Studio\Kayle remake\Kayle\Textures\terrain\grass_bottom.png
+1 0 0 D:\Documents\Projets Visual Studio\Kayle remake\Kayle\Textures\terrain\grass_bottom_right.png
+1 0 0 D:\Documents\Projets Visual Studio\Kayle remake\Kayle\Textures\terrain\grass_right.png
+0 0 0 D:\Documents\Projets Visual Studio\Kayle remake\Kayle\Textures\terrain\dirt.png
